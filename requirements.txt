@@ -1,0 +1,10 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+pandas
+pyarrow
+pyreadstat
+sdv
+streamlit
+ollama
+anthropic
+plotly
+scipy

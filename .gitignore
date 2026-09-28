@@ -1,0 +1,24 @@
+# secrets
+.env
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# real survey data - never commit
+data/*
+!data/.gitkeep
+
+# generated output (rebuild with `docker compose run --rm convert`)
+parquet/*
+!parquet/.gitkeep
+
+# saved SDV models - fit on the real data, so treat like data
+models/*
+!models/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,59 @@
+# If GPU passthrough fails, delete the `deploy` block under ollama (CPU works, but a 9B model is slow).
+x-app: &app
+  build: .
+  image: synthetic-v2
+  environment:
+    OLLAMA_HOST: http://ollama:11434
+    ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}   # only needed if config.toml [claude] enabled = true
+  volumes:
+    - ./parquet:/parquet
+    - ./models:/models   # saved SDV models, keyed on upload file name
+    - ./config.toml:/app/config.toml
+
+services:
+  ollama:
+    image: ollama/ollama
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      - "11435:11434"   # host Ollama already uses 11434
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      retries: 20
+
+  ollama-pull:
+    image: ollama/ollama
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["ollama", "pull", "ornith-1.5:9b"]  # matches app.py's default model selection
+    depends_on:
+      ollama: {condition: service_healthy}
+    restart: "no"
+
+  convert:
+    <<: *app
+    command: python convert.py
+    profiles: [tools]
+    volumes:
+      - ./data:/data:ro
+      - ./parquet:/parquet
+      - ./models:/models
+
+  app:
+    <<: *app
+    command: streamlit run app.py --server.address 0.0.0.0 --server.port 8501
+    ports:
+      - "8501:8501"
+    depends_on:
+      ollama-pull: {condition: service_completed_successfully}
+
+volumes:
+  ollama:

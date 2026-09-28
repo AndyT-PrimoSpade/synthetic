@@ -1,0 +1,5 @@
+# Not exposed in the UI on purpose.
+# Toggle the LLM method's backend: local Ollama (default) or the Claude API.
+# When enabled, needs ANTHROPIC_API_KEY set (e.g. in a .env file next to docker-compose.yml).
+[claude]
+enabled = false
